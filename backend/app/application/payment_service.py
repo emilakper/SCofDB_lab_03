@@ -117,13 +117,11 @@ class PaymentService:
                 print(f"[{order_id}] Order already paid → raising exception")
                 raise OrderAlreadyPaidError(f"Order {order_id} already paid")
 
-            # Обновляем статус заказа
             await self.session.execute(
                 text("UPDATE orders SET status = 'paid' WHERE id = :order_id"),
                 {"order_id": order_id}
             )
-            
-            # ⚠️ ВАЖНО: Добавляем запись в историю статусов!
+
             await self.session.execute(
                 text("""
                     INSERT INTO order_status_history (id, order_id, status, changed_at)
