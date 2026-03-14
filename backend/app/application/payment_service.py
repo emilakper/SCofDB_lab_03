@@ -6,6 +6,7 @@ pay_order_safe() - безопасная реализация (REPEATABLE READ + 
 import uuid
 from typing import Optional
 from sqlalchemy import text
+import asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.domain.exceptions import OrderAlreadyPaidError, OrderNotFoundError
 
@@ -44,6 +45,10 @@ class PaymentService:
                 raise OrderNotFoundError(f"Order {order_id} not found")
             
             status = row[0]
+            print(f"[{order_id}] Прочитали статус: {status}")
+
+            await asyncio.sleep(0.1)
+            print(f"[{order_id}] Продолжаем после задержки...")
 
             if status != 'created':
                 raise OrderAlreadyPaidError(f"Order {order_id} already paid")
@@ -112,8 +117,18 @@ class PaymentService:
                 print(f"[{order_id}] Order already paid → raising exception")
                 raise OrderAlreadyPaidError(f"Order {order_id} already paid")
 
+            # Обновляем статус заказа
             await self.session.execute(
                 text("UPDATE orders SET status = 'paid' WHERE id = :order_id"),
+                {"order_id": order_id}
+            )
+            
+            # ⚠️ ВАЖНО: Добавляем запись в историю статусов!
+            await self.session.execute(
+                text("""
+                    INSERT INTO order_status_history (id, order_id, status, changed_at)
+                    VALUES (gen_random_uuid(), :order_id, 'paid', NOW())
+                """),
                 {"order_id": order_id}
             )
         
