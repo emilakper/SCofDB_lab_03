@@ -114,48 +114,48 @@ EXECUTE FUNCTION check_order_not_already_paid();
 -- TODO: Триггер автоматического пересчета total_amount
 -- TODO: Триггер автоматической записи в историю при изменении статуса
 -- TODO: Триггер записи начального статуса при создании заказа
-CREATE OR REPLACE FUNCTION update_order_total_amount() RETURNS TRIGGER AS $$
-BEGIN
-    UPDATE orders
-    SET total_amount = (
-        SELECT COALESCE(SUM(price * quantity), 0)
-        FROM order_items
-        WHERE order_id = NEW.order_id
-    )
-    WHERE id = NEW.order_id;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+--CREATE OR REPLACE FUNCTION update_order_total_amount() RETURNS TRIGGER AS $$
+--BEGIN
+--    UPDATE orders
+--    SET total_amount = (
+--        SELECT COALESCE(SUM(price * quantity), 0)
+--        FROM order_items
+--        WHERE order_id = NEW.order_id
+--    )
+--    WHERE id = NEW.order_id;
+--    RETURN NEW;
+--END;
+--$$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trigger_update_order_total_after_item_change
-AFTER INSERT OR UPDATE OR DELETE ON order_items
-FOR EACH ROW
-EXECUTE FUNCTION update_order_total_amount();
+--CREATE TRIGGER trigger_update_order_total_after_item_change
+--AFTER INSERT OR UPDATE OR DELETE ON order_items
+--FOR EACH ROW
+--EXECUTE FUNCTION update_order_total_amount();
 
-CREATE OR REPLACE FUNCTION log_order_status_change() RETURNS TRIGGER AS $$
-BEGIN
-    IF NEW.status <> OLD.status THEN
-        INSERT INTO order_status_history (order_id, status, changed_at)
-        VALUES (NEW.id, NEW.status, CURRENT_TIMESTAMP);
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+--CREATE OR REPLACE FUNCTION log_order_status_change() RETURNS TRIGGER AS $$
+--BEGIN
+--    IF NEW.status <> OLD.status THEN
+--        INSERT INTO order_status_history (order_id, status, changed_at)
+--        VALUES (NEW.id, NEW.status, CURRENT_TIMESTAMP);
+--    END IF;
+--    RETURN NEW;
+--END;
+--$$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trigger_log_order_status_change
-AFTER UPDATE ON orders
-FOR EACH ROW
-EXECUTE FUNCTION log_order_status_change();
+--CREATE TRIGGER trigger_log_order_status_change
+--AFTER UPDATE ON orders
+--FOR EACH ROW
+--EXECUTE FUNCTION log_order_status_change();
 
-CREATE OR REPLACE FUNCTION insert_initial_order_status() RETURNS TRIGGER AS $$
-BEGIN
-    INSERT INTO order_status_history (order_id, status, changed_at)
-    VALUES (NEW.id, NEW.status, NEW.created_at);
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+--CREATE OR REPLACE FUNCTION insert_initial_order_status() RETURNS TRIGGER AS $$
+--BEGIN
+--    INSERT INTO order_status_history (order_id, status, changed_at)
+--    VALUES (NEW.id, NEW.status, NEW.created_at);
+--    RETURN NEW;
+--END;
+--$$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trigger_insert_initial_order_status
-AFTER INSERT ON orders
-FOR EACH ROW
-EXECUTE FUNCTION insert_initial_order_status()
+--CREATE TRIGGER trigger_insert_initial_order_status
+--AFTER INSERT ON orders
+--FOR EACH ROW
+--EXECUTE FUNCTION insert_initial_order_status()

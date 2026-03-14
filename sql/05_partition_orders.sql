@@ -92,12 +92,4 @@ SELECT COUNT(*), AVG(total_amount)
 FROM orders_partitioned_demo
 WHERE created_at >= '2025-01-01' AND created_at < '2025-04-01';
 
-\echo '=== PARTITION SIZES ==='
-SELECT
-    table_name,
-    n_live_tup as rows
-FROM pg_stat_user_tables
-WHERE table_name LIKE 'orders_demo_2025%'
-ORDER BY table_name;
-
 \echo '=== PARTITIONING DEMO COMPLETE ==='
